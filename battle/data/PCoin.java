@@ -51,7 +51,7 @@ public class PCoin extends Data {
 	public ArrayList<Trait> trait = new ArrayList<>();
 	@JsonField(generic = int[].class, io = JsonField.IOType.R)
 	@Deprecated
-	public final ArrayList<int[]> info = new ArrayList<>();
+	public ArrayList<int[]> info;
 
 	@JsonField(generic = int[].class)
 	public final ArrayList<int[]> data = new ArrayList<>(); // List{ { id, name, modif0... } } -> { { abilityId, maxLvl, isUltra } }
@@ -217,13 +217,13 @@ public class PCoin extends Data {
 		for (int i = 0; i < data.size(); i++) {
 			int[] data = this.data.get(i);
 			if (data[0] >= PC_CORRES.length) {
-				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + this.data.get(i)[0] + "\nText ID is " + this.data.get(i)[10]+"\nData is "+Arrays.toString(this.data.get(i)));
-				continue;
+				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + this.data.get(i)[0] +"\nData is "+Arrays.toString(this.data.get(i)));
+				continue; // todo: include all data including modifiers and traits
 			}
 
 			int[] type = PC_CORRES[data[0]];
 			if (type[0] == -1) {
-				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + this.data.get(i)[0] + "\nText ID is " + this.data.get(i)[10]+"\nData is "+Arrays.toString(this.data.get(i)));
+				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + this.data.get(i)[0] +"\nData is "+Arrays.toString(this.data.get(i)));
 				continue;
 			}
 

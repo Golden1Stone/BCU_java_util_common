@@ -146,6 +146,7 @@ public class Form extends Animable<AnimU<?>, AnimU.UType> implements BasedCopabl
 	}
 
 	@OnInjected
+	@SuppressWarnings("deprecation")
 	public void onInjected() {
 		CustomUnit data = (CustomUnit) du;
 		data.pack = this;
@@ -236,6 +237,26 @@ public class Form extends Animable<AnimU<?>, AnimU.UType> implements BasedCopabl
 			}
 		}
 		if (data.getPCoin() != null) {
+			PCoin pc = data.getPCoin();
+			if (pc.info != null) {
+				for (int[] ints : pc.info)
+					pc.data.add(new int[] { ints[0], ints[1], ints[13] });
+				pc.modifiers = new int[pc.info.size()][PCoin.MODIFIER_MAX][2];
+				pc.traits = new Trait[pc.info.size()][0];
+				for (int i = 0; i < pc.info.size(); i++) {
+					for (int j = 0; j < pc.modifiers[i].length; j++) {
+						pc.modifiers[i][j][0] = pc.info.get(i)[2 + j * 2];
+						pc.modifiers[i][j][1] = pc.info.get(i)[3 + j * 2];
+					}
+					if (pc.info.get(i)[12] > 0)
+						pc.traits[i] = pc.trait.toArray(new Trait[0]);
+				}
+
+				pc.info = null;
+				pc.trait = null;
+			}
+
+
 			data.pcoin.verify();
 			data.pcoin.updateMax();
 		}
