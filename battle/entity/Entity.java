@@ -232,7 +232,8 @@ public abstract class Entity extends AbEntity {
 		public void getEff(int t) {
 			int dire = e.dire;
 			if (t == INV) {
-				effs[eftp] = null;
+				if (eftp != 0)
+					effs[eftp] = null;
 				eftp = A_EFF_INV;
 				effs[eftp] = effas().A_EFF_INV.getEAnim(DefEff.DEF);
 				efft = effas().A_EFF_INV.len(DefEff.DEF);
@@ -1869,7 +1870,7 @@ public abstract class Entity extends AbEntity {
 			} else
 				anim.getEff(INV);
 
-			if(dire == - 1 && basis.canon.deco == DECO_BASE_STOP) {
+			if(dire == -1 && basis.canon.deco == DECO_BASE_STOP) {
 				status[P_STOP][0] = (int) (status[P_STOP][0] * basis.b.t().getDecorationMagnification(basis.canon.deco, Data.DECO_FREEZE));
 			}
 		}
@@ -1897,7 +1898,6 @@ public abstract class Entity extends AbEntity {
 
 		if (atk.getProc().WEAK.time > 0) {
 			int val = (int) (atk.getProc().WEAK.time * time);
-
 			float rst = getResistValue(
 					atk,
 					"IMUWEAK",
@@ -1905,14 +1905,12 @@ public abstract class Entity extends AbEntity {
 			);
 
 			val = (int) (val * rst);
-
 			if(dire == -1 && basis.canon.deco == DECO_BASE_GROUND) {
 				val = (int) (val * basis.b.t().getDecorationMagnification(basis.canon.deco, Data.DECO_WEAK));
 			}
 
 			if (rst > 0f) {
 				weaks.add(new int[] { val, atk.getProc().WEAK.mult });
-
 				anim.getEff(P_WEAK);
 			} else
 				anim.getEff(INV);
@@ -1920,12 +1918,10 @@ public abstract class Entity extends AbEntity {
 
 		if (atk.getProc().CURSE.time != 0 || atk.getProc().CURSE.prob > 0) {
 			int val = (int) (atk.getProc().CURSE.time * time);
-
 			float rst = getResistValue(atk, "IMUCURSE", getProc().IMUCURSE.mult);
 
 			if (rst > 0f) {
 				val = (int) (val * rst);
-
 				if (val < 0)
 					status[P_CURSE][0] = Math.max(status[P_CURSE][0], Math.abs(val));
 				else
@@ -1935,7 +1931,7 @@ public abstract class Entity extends AbEntity {
 			} else
 				anim.getEff(INV);
 
-			if(dire == - 1 && basis.canon.deco == DECO_BASE_CURSE) {
+			if(dire == -1 && basis.canon.deco == DECO_BASE_CURSE) {
 				status[P_CURSE][0] = (int) (status[P_CURSE][0] * basis.b.t().getDecorationMagnification(basis.canon.deco, Data.DECO_CURSE));
 			}
 		}

@@ -466,9 +466,9 @@ public class PCoin extends Data {
 				System.arraycopy(data, 0, newData, 0, data.length);
 				return newData;
 			}
-
 			return data;
 		});
+		info.removeIf(d -> d[0] > PCOIN_MAX);
 	}
 
 	private static boolean talentExist(String[] data, int index) {
