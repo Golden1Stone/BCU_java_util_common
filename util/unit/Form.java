@@ -209,7 +209,7 @@ public class Form extends Animable<AnimU<?>, AnimU.UType> implements BasedCopabl
 					}
 				}
 				if (UserProfile.isOlderPack(pack, "0.7.4.1") && data.pcoin != null) {
-					data.pcoin.info.forEach(i -> i[12] = -1);
+					data.pcoin.data.forEach(i -> i[12] = -1);
 				}
 
 				if (data.getProc().SUMMON.prob > 0 && data.getProc().SUMMON.form <= 0) {
@@ -237,7 +237,7 @@ public class Form extends Animable<AnimU<?>, AnimU.UType> implements BasedCopabl
 		}
 		if (data.getPCoin() != null) {
 			data.pcoin.verify();
-			data.pcoin.update();
+			data.pcoin.updateMax();
 		}
 	}
 
@@ -255,10 +255,9 @@ public class Form extends Animable<AnimU<?>, AnimU.UType> implements BasedCopabl
 			PCoin pc = du.getPCoin();
 
 			if (pc != null) {
-				int[] maxTalents = new int[pc.info.size()];
-
-				for (int i = 0; i < pc.info.size(); i++)
-					maxTalents[i] = Math.max(1, pc.info.get(i)[1]);
+				int[] maxTalents = new int[pc.getTalentCount()];
+				for (int i = 0; i < pc.getTalentCount(); i++)
+					maxTalents[i] = Math.max(1, pc.data.get(i)[1]);
 
 				int[] t = new int[maxTalents.length];
 
@@ -281,11 +280,11 @@ public class Form extends Animable<AnimU<?>, AnimU.UType> implements BasedCopabl
 			PCoin pc = du.getPCoin();
 
 			if (pc != null) {
-				int[] maxTalents = new int[pc.info.size()];
-				int[] t = new int[pc.info.size()];
+				int[] maxTalents = new int[pc.getTalentCount()];
+				int[] t = new int[pc.getTalentCount()];
 
-				for (int i = 0; i < pc.info.size(); i++)
-					maxTalents[i] = Math.max(1, pc.info.get(i)[1]);
+				for (int i = 0; i < pc.getTalentCount(); i++)
+					maxTalents[i] = Math.max(1, pc.data.get(i)[1]);
 
 				for (int i = 0; i < Math.min(maxTalents.length, target.getTalents().length); i++) {
 					t[i] = Math.min(maxTalents[i], Math.max(0, target.getTalents()[i]));

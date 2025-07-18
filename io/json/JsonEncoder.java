@@ -172,7 +172,7 @@ public class JsonEncoder {
 					jf = JsonField.DEF;
 				if (jf.block() || jf.io() == JsonField.IOType.R)
 					continue;
-				String tag = jf.tag().length() == 0 ? f.getName() : jf.tag();
+				String tag = jf.tag().isEmpty() ? f.getName() : jf.tag();
 				f.setAccessible(true);
 				curjfld = jf;
 				Object val = f.get(obj);

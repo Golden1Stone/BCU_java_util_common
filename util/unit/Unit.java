@@ -191,8 +191,8 @@ public class Unit extends Data implements Comparable<Unit>, Indexable<PackData, 
 		for(Form f : forms) {
 			PCoin coin = f.du.getPCoin();
 
-			if(coin != null && coin.max.length > maxTalent) {
-				maxTalent = coin.max.length;
+			if (coin != null && coin.getTalentCount() > maxTalent) {
+				maxTalent = coin.getTalentCount();
 				pc = coin;
 
 			}
@@ -210,10 +210,9 @@ public class Unit extends Data implements Comparable<Unit>, Indexable<PackData, 
 		lv.setPlusLevel(getPreferredPlusLevel());
 
 		if (pc != null) {
-			int[] talents = new int[pc.max.length];
-
-			System.arraycopy(pc.max, 0, talents, 0, talents.length);
-
+			int[] max = pc.getMaxLvls();
+			int[] talents = new int[max.length];
+			System.arraycopy(max, 0, talents, 0, talents.length);
 			lv.setTalents(talents);
 		}
 

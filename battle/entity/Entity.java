@@ -1462,7 +1462,7 @@ public abstract class Entity extends AbEntity {
 	}
 
 	protected Entity(StageBasis b, MaskEntity de, EAnimU ea, float lvMagnif, float tAtk, float tHP, PCoin pc, Level lv) {
-		super((pc != null && lv != null && lv.getTalents().length == pc.max.length) ?
+		super((pc != null && lv != null && lv.getTalents().length == pc.getTalentCount()) ?
 				// (b.isBanned
 				(int) ((1 + (b.isBanned(Data.C_DEF) ? 0 : b.b.getInc(Data.C_DEF)) * 0.01) * (int) ((int) (Math.round(de.getHp() * lvMagnif) * tHP) * pc.getHPMultiplication(lv.getTalents()))) :
 				(int) ((1 + (b.isBanned(Data.C_DEF) ? 0 : b.b.getInc(Data.C_DEF)) * 0.01) * (int) (Math.round(de.getHp() * lvMagnif) * tHP))
@@ -1829,7 +1829,6 @@ public abstract class Entity extends AbEntity {
 		if (!(ctargetable(atk.trait, atk.attacker, false) || (receive(-1) && atk.SPtr) || (receive(1) && !atk.SPtr)))
 			return;
 
-		boolean cannonResist = atk.canon > 0 && getProc().IMUCANNON.exists() && (atk.canon & getProc().IMUCANNON.type) > 0;
 		if (atk.getProc().POIATK.mult > 0) {
 			int rst = getProc().IMUPOIATK.mult;
 

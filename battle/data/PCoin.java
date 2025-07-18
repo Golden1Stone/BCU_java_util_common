@@ -12,7 +12,6 @@ import common.util.Data;
 import common.util.Data.Proc.ProcItem;
 import common.util.unit.Trait;
 import common.util.unit.Unit;
-import org.jcodec.common.tools.MathUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,8 +19,10 @@ import java.util.Queue;
 
 @JsonClass(read = JsonClass.RType.FILL)
 public class PCoin extends Data {
-	public static int PCOIN_MIN = 1;
-	public static int PCOIN_MAX;
+	public static int TALENT_ID_MIN = 1;
+	public static int TALENT_ID_MAX;
+	public static int MODIFIER_MAX = 5;
+	public static int TALENT_COUNT_MAX = 8;
 	public static void read() {
 		Queue<String> qs = VFile.readLine("./org/data/SkillAcquisition.csv");
 
@@ -38,135 +39,160 @@ public class PCoin extends Data {
 					for (int i = 2; i < u.forms.length; i++)
 						new PCoin(data, u.forms[i].du);
 				}
-				PCOIN_MAX = Math.max(PCOIN_MAX, data[2]);
+				TALENT_ID_MAX = Math.max(TALENT_ID_MAX, data[2]);
 			}
 		}
 	}
 
 	private final MaskUnit du;
 	public MaskUnit full = null;
-	@JsonField(generic = Trait.class, alias = Identifier.class)
+	@JsonField(generic = Trait.class, alias = Identifier.class, io = JsonField.IOType.R)
+	@Deprecated
 	public ArrayList<Trait> trait = new ArrayList<>();
-
-	@JsonField(block = true)
-	public int[] max;
-	@JsonField(generic = int[].class)
+	@JsonField(generic = int[].class, io = JsonField.IOType.R)
+	@Deprecated
 	public final ArrayList<int[]> info = new ArrayList<>();
+
+	@JsonField(generic = int[].class)
+	public final ArrayList<int[]> data = new ArrayList<>(); // List{ { id, name, modif0... } } -> { { abilityId, maxLvl, isUltra } }
+	@JsonField(alias = Identifier.class)
+	public Trait[][] traits; // { {  }, { Trait.RED, ... }, ... }
+	@JsonField
+	public int[][][] modifiers;
 
 	public PCoin(CustomEntity ce) {
 		du = (CustomUnit)ce;
 		((CustomUnit)du).pcoin = this;
 	}
 
-	public PCoin(String[] strs, MaskUnit du) { // leaving reminder that this is unused at least in PC ver.
-		trait = Trait.convertType(CommonStatic.parseIntN(strs[1]));
-		for (int i = 0; i < 8; i++) {
-			if(talentExist(strs, 2 + i * 14)) {
-				info.add(new int[14]);
-
-				for (int j = 0; j < 14; j++) {
-					int v = CommonStatic.parseIntN(strs[2 + i * 14 + j]);
-					info.get(info.size() - 1)[j] = v;
-				}
-			}
-		}
-
-		max = info.stream().mapToInt(i -> Math.max(1, i[1])).toArray();
-		this.du = du;
-
-		full = improve(max);
-	}
+	// TODO: commenting this out until i figure out if it's safe to delete
+//	public PCoin(String[] strs, MaskUnit du) { // leaving reminder that this is unused at least in PC ver.
+//		trait = Trait.convertType(CommonStatic.parseIntN(strs[1]));
+//		for (int i = 0; i < 8; i++) {
+//			if(talentExist(strs, 2 + i * 14)) {
+//				info.add(new int[14]);
+//
+//				for (int j = 0; j < 14; j++) {
+//					int v = CommonStatic.parseIntN(strs[2 + i * 14 + j]);
+//					info.get(info.size() - 1)[j] = v;
+//				}
+//			}
+//		}
+//
+//		max = info.stream().mapToInt(i -> Math.max(1, i[1])).toArray();
+//		this.du = du;
+//
+//		full = improve(max);
+//	}
 
 	private PCoin(int[] strs, MaskUnit du) {
-		trait = Trait.convertTalentType(strs[1]);
-
-		for (int i = 0; i < 8; i++) {
-			if (2 + i * 14 >= strs.length) {
+		for (int i = 0; i < TALENT_COUNT_MAX; i++) { //
+			if (2 + i * 14 >= strs.length)
 				break;
-			}
 
 			if(strs[2 + i * 14] != 0) {
-				int[] data = new int[14];
-				for (int j = 0; j < 14; j++)
-					data[j] = strs[2 + i * 14 + j];
-				if(data[0] >= 0 && data[0] < PC_CORRES.length && PC_CORRES[data[0]][1] == P_MINIWAVE) {
-					if(data[6] == 0 && data[7] == 0) {
-						data[6] = 20;
-						data[7] = 20;
-					}
-				}
-				info.add(data);
+				int startIndex = 2 + i * 14;
+				int[] infoData = new int[3];
+
+				infoData[0] = strs[startIndex]; // abilityId
+				infoData[1] = Math.max(1, strs[startIndex + 1]); // max lvl
+				infoData[2] = strs[13 + startIndex]; //
+				data.add(infoData);
 			}
 		}
+		// all of data should be iterated now
+		modifiers = new int[getTalentCount()][MODIFIER_MAX][2];
+		traits = new Trait[getTalentCount()][0];
+		for (int i = 0; i < getTalentCount(); i++) {
+			int startIndex = 2 + i * 14;
+			for (int j = 0; j < modifiers[i].length; j++) {
+				modifiers[i][j][0] = strs[startIndex + 2 + j * 2];
+				modifiers[i][j][1] = strs[startIndex + 3 + j * 2];
+			}
+			int talentId = data.get(i)[0];
+			if (talentId > 0 && talentId < PC_CORRES.length && PC_CORRES[talentId][1] == P_MINIWAVE)
+				if (modifiers[i][3][0] == 0 && modifiers[i][3][1] == 0) {
+					modifiers[i][3][0] = 20;
+					modifiers[i][3][1] = 20;
+				}
+			if (strs[startIndex + 12] > 0)
+				traits[i] = Trait.convertTalentType(strs[1]).toArray(new Trait[0]);
+		}
 
-		max = info.stream().mapToInt(i -> Math.max(1, i[1])).toArray();
 		this.du = du;
 		((DataUnit) du).pcoin = this;
-		full = improve(max);
+		updateMax();
 	}
 
-	public void update() {
-		// Apparently, if max is null, since we will update full var anyway
-		// we can just re-generate whole array
-		if (max == null || max.length < info.size())
-			max = info.stream().mapToInt(i -> Math.max(1, i[1])).toArray();
+	public int[] getMaxLvls() {
+		return data.stream().mapToInt(i -> i[1]).toArray();
+	}
 
-		full = improve(max);
+	public void updateMax() {
+		full = improve(getMaxLvls());
 	}
 
 	public void verify() {
-		for (int[] data : info) {
+		for (int[] data : data) { // { id, maxLv, ultra }
 			Proc proc = du.getAllProc();
 			data[1] = Math.max(data[1], 1);
-			int type = Data.PC_CORRES[data[0]][1];
-
-			if (Data.PC_CORRES[data[0]][3] != -1) {
-				data[1] = Data.PC_CORRES[Data.PC_CORRES[data[0]][3]][1];
-				data[2] = data[3] = 100 - proc.getArr(type).get(0);
-				return;
-			}
-
-			switch (data[0]) { // todo: use editorgroup (please)
-				case 0:
-					break;
-				case 56: case 65: // normalize surge chance
-					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(0));
-					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(0));
-					data[8] = Math.max(1, data[8] / Data.VOLC_ITV) * Data.VOLC_ITV;
-					data[9] = Math.max(Math.max(1, data[9] / Data.VOLC_ITV) * Data.VOLC_ITV, data[8]);
-					break;
-				case 10:
-					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(0));
-					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(0));
-					data[4] = Math.max(data[4], 0);
-					data[5] = Math.max(data[5], data[4]);
-					break;
-				case 61:
-					data[2] = MathUtil.clip(data[2], 0, 100);
-					data[3] = MathUtil.clip(data[3], data[2], 100);
-					break;
-				case 25: case 26: case 31: case 32:
-					data[2] = Math.max(data[2], 0);
-					data[3] = Math.max(data[3], data[2]);
-					break;
-				case 64:
-					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(1));
-					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(1));
-					data[4] = Math.max(data[4], 0);
-					data[5] = Math.max(data[5], data[4]);
-					break;
-				case 62: case 1:
-					data[6] = Math.max(data[6], 0);
-					data[7] = Math.max(data[7], data[6]);
-				case 2: case 3: case 9: case 17: case 50: case 51: case 60:
-					data[4] = Math.max(data[4], 0);
-					data[5] = Math.max(data[5], data[4]);
-				case 8: case 11: case 13: case 15: case 18: case 19: case 20: case 21: case 22: case 24: case 30:
-				case 52: case 54: case 58:
-					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(0));
-					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(0));
-					break;
-			}
+//			int[] talentRes = Data.PC_CORRES[data[0]];
+//			int type = talentRes[1];
+//
+//			if (Data.PC_CORRES[data[0]][3] != -1) {
+//				data[1] = Data.PC_CORRES[Data.PC_CORRES[data[0]][3]][1];
+//				data[2] = data[3] = 100 - proc.getArr(type).get(0);
+//				return;
+//			}
+//
+//			if (talentRes[0] == PC_P) {
+//				switch (talentRes[1]) {
+//
+//				}
+//			}
+//
+//
+//			switch (data[0]) { // todo: use editorgroup (please)
+//				case 0:
+//					break;
+//				case 56: case 65: // normalize surge chance
+//					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(0));
+//					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(0));
+//					data[8] = Math.max(1, data[8] / Data.VOLC_ITV) * Data.VOLC_ITV;
+//					data[9] = Math.max(Math.max(1, data[9] / Data.VOLC_ITV) * Data.VOLC_ITV, data[8]);
+//					break;
+//				case 10:
+//					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(0));
+//					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(0));
+//					data[4] = Math.max(data[4], 0);
+//					data[5] = Math.max(data[5], data[4]);
+//					break;
+//				case 61:
+//					data[2] = MathUtil.clip(data[2], 0, 100);
+//					data[3] = MathUtil.clip(data[3], data[2], 100);
+//					break;
+//				case 25: case 26: case 31: case 32:
+//					data[2] = Math.max(data[2], 0);
+//					data[3] = Math.max(data[3], data[2]);
+//					break;
+//				case 64:
+//					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(1));
+//					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(1));
+//					data[4] = Math.max(data[4], 0);
+//					data[5] = Math.max(data[5], data[4]);
+//					break;
+//				case 62: case 1:
+//					data[6] = Math.max(data[6], 0);
+//					data[7] = Math.max(data[7], data[6]);
+//				case 2: case 3: case 9: case 17: case 50: case 51: case 60:
+//					data[4] = Math.max(data[4], 0);
+//					data[5] = Math.max(data[5], data[4]);
+//				case 8: case 11: case 13: case 15: case 18: case 19: case 20: case 21: case 22: case 24: case 30:
+//				case 52: case 54: case 58:
+//					data[2] = MathUtil.clip(data[2], 0, 100 - proc.getArr(type).get(0));
+//					data[3] = MathUtil.clip(data[3], data[2], 100 - proc.getArr(type).get(0));
+//					break;
+//			}
 		}
 	}
 
@@ -175,6 +201,7 @@ public class PCoin extends Data {
 		MaskUnit ans = du.clone();
 
 		int[] temp;
+		int[] max = getMaxLvls();
 
 		if (talents.length < max.length) {
 			temp = new int[max.length];
@@ -187,16 +214,16 @@ public class PCoin extends Data {
 
 		talents = temp;
 
-		for (int i = 0; i < info.size(); i++) {
-			int[] data = info.get(i);
+		for (int i = 0; i < data.size(); i++) {
+			int[] data = this.data.get(i);
 			if (data[0] >= PC_CORRES.length) {
-				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + info.get(i)[0] + "\nText ID is " + info.get(i)[10]+"\nData is "+Arrays.toString(info.get(i)));
+				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + this.data.get(i)[0] + "\nText ID is " + this.data.get(i)[10]+"\nData is "+Arrays.toString(this.data.get(i)));
 				continue;
 			}
 
 			int[] type = PC_CORRES[data[0]];
 			if (type[0] == -1) {
-				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + info.get(i)[0] + "\nText ID is " + info.get(i)[10]+"\nData is "+Arrays.toString(info.get(i)));
+				CommonStatic.ctx.printErr(ErrType.NEW, "new PCoin ability not yet handled by BCU: " + this.data.get(i)[0] + "\nText ID is " + this.data.get(i)[10]+"\nData is "+Arrays.toString(this.data.get(i)));
 				continue;
 			}
 
@@ -206,26 +233,24 @@ public class PCoin extends Data {
 					ans.getTraits().remove(types);
 				}
 				continue;
-			}
-
-			//Targettings that come with a talent, such as Hyper Mr's
-			if (data[12] > 0 && !this.trait.isEmpty() && talents[i] > 0)
-				for (Trait t : this.trait)
+			} else {
+				for (Trait t : traits[i])
 					if (!ans.getTraits().contains(t))
 						ans.getTraits().add(t);
+			}
 
 			int maxlv = data[1];
-			int[] modifs = new int[5];
+			int[] modifs = new int[modifiers[i].length];
 
 			if (maxlv > 1) {
-				for (int j = 0; j < 5; j++) {
-					int v0 = data[2 + j * 2];
-					int v1 = data[3 + j * 2];
-					modifs[j] = (v1 - v0) * (talents[i] - 1) / (maxlv - 1) + v0;
+				for (int j = 0; j < modifs.length; j++) {
+					int modif0 = modifiers[i][j][0];
+					int modif1 = modifiers[i][j][1];
+					modifs[j] = (modif1 - modif0) * (talents[i] - 1) / (maxlv - 1) + modif0;
 				}
 			} else
-				for (int j = 0; j < 5; j++)
-					modifs[j] = data[3 + j * 2];
+				for (int j = 0; j < modifs.length; j++)
+					modifs[j] = modifiers[i][j][0];
 
 			if (type[0] == PC_P) {
 				ProcItem tar = ans.getProc().getArr(type[1]);
@@ -303,9 +328,9 @@ public class PCoin extends Data {
 				}
 			} else if (type[0] == PC_AB || type[0] == PC_BASE) {
 				if (du instanceof DataUnit)
-					improve((DataUnit)ans,type,modifs);
+					improve((DataUnit)ans, type, modifs);
 				else
-					improve((CustomUnit)ans,type,modifs);
+					improve((CustomUnit)ans, type, modifs);
 			} else if (type[0] == PC_IMU)
 				ans.getProc().getArr(type[1]).set(0, 100);
 			else if (type[0] == PC_TRAIT) {
@@ -319,7 +344,7 @@ public class PCoin extends Data {
 		return ans;
 	}
 
-	private void improve(DataUnit ans, int[] type, int[] modifs) {
+	private static void improve(DataUnit ans, int[] type, int[] modifs) {
 		if (type[0] == PC_AB)
 			ans.abi |= type[1];
 		else {
@@ -342,7 +367,7 @@ public class PCoin extends Data {
 		}
 	}
 
-	private void improve(CustomUnit ans, int[] type, int[] modifs) {
+	private static void improve(CustomUnit ans, int[] type, int[] modifs) {
 		if (type[0] == PC_AB)
 			ans.abi |= type[1];
 		else {
@@ -366,31 +391,27 @@ public class PCoin extends Data {
 	}
 
 	public double getAtkMultiplication(int[] talents) {
-		for(int i = 0; i < info.size(); i++) {
-			if(info.get(i)[0] >= PC_CORRES.length)
+		for(int i = 0; i < data.size(); i++) {
+			if(data.get(i)[0] >= PC_CORRES.length || talents[i] == 0)
 				continue;
 
-			if(talents[i] == 0)
-				continue;
-
-			int[] type = PC_CORRES[info.get(i)[0]];
-
+			int[] type = PC_CORRES[data.get(i)[0]];
 			if(type[0] == -1)
 				continue;
 
-			if(type[0] == PC_BASE && type[1] == PC2_ATK) {
-				int maxlv = info.get(i)[1];
+			if(type[1] == PC2_ATK) {
+				int maxlv = data.get(i)[1];
 				int[] modifs = new int[4];
 				if (maxlv > 1) {
-					for (int j = 0; j < 4; j++) {
-						int v0 = info.get(i)[2 + j * 2];
-						int v1 = info.get(i)[3 + j * 2];
+					for (int j = 0; j < modifs.length; j++) {
+						int v0 = modifiers[i][j][0];
+						int v1 = modifiers[i][j][1];
 						modifs[j] = (v1 - v0) * (talents[i] - 1) / (maxlv - 1) + v0;
 					}
 				}
 				if (maxlv == 0)
-					for (int j = 0; j < 4; j++)
-						modifs[j] = info.get(i)[3 + j * 2];
+					for (int j = 0; j < modifs.length; j++)
+						modifs[j] = modifiers[i][j][0];
 
 				return 1 + modifs[0] * 0.01;
 			}
@@ -400,31 +421,31 @@ public class PCoin extends Data {
 	}
 
 	public double getHPMultiplication(int[] talents) {
-		for(int i = 0; i < info.size(); i++) {
-			if(info.get(i)[0] >= PC_CORRES.length)
+		for(int i = 0; i < data.size(); i++) {
+			if(data.get(i)[0] >= PC_CORRES.length)
 				continue;
 
 			if(talents[i] == 0)
 				continue;
 
-			int[] type = PC_CORRES[info.get(i)[0]];
+			int[] type = PC_CORRES[data.get(i)[0]];
 
 			if(type[0] == -1)
 				continue;
 
 			if(type[0] == PC_BASE && type[1] == PC2_HP) {
-				int maxlv = info.get(i)[1];
+				int maxlv = data.get(i)[1];
 				int[] modifs = new int[4];
 				if (maxlv > 1) {
-					for (int j = 0; j < 4; j++) {
-						int v0 = info.get(i)[2 + j * 2];
-						int v1 = info.get(i)[3 + j * 2];
+					for (int j = 0; j < modifs.length; j++) {
+						int v0 = modifiers[i][j][0];
+						int v1 = modifiers[i][j][1];
 						modifs[j] = (v1 - v0) * (talents[i] - 1) / (maxlv - 1) + v0;
 					}
 				}
 				if (maxlv == 0)
-					for (int j = 0; j < 4; j++)
-						modifs[j] = info.get(i)[3 + j * 2];
+					for (int j = 0; j < modifs.length; j++)
+						modifs[j] = modifiers[i][j][0];
 
 				return 1 + modifs[0] * 0.01;
 			}
@@ -432,10 +453,14 @@ public class PCoin extends Data {
 
 		return 1.0;
 	}
+
+	public int getTalentCount() {
+		return data.size();
+	}
 	
 	@OnInjected
 	public void onInjected() {
-		info.replaceAll(data -> {
+		data.replaceAll(data -> {
 			if (data.length != 14) {
 				int[] newData = new int[14];
 				System.arraycopy(data, 0, newData, 0, data.length);
@@ -444,10 +469,6 @@ public class PCoin extends Data {
 
 			return data;
 		});
-
-		max = new int[info.size()];
-		for (int i = 0; i < info.size(); i++)
-			max[i] = Math.max(1, info.get(i)[1]);
 	}
 
 	private static boolean talentExist(String[] data, int index) {

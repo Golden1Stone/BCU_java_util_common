@@ -18,7 +18,7 @@ public class EForm extends Data {
 
 	public EForm(Form form, int lv) {
 		f = form;
-		level = new Level(form.du.getPCoin() == null ? 0 : form.du.getPCoin().info.size());
+		level = new Level(form.du.getPCoin() == null ? 0 : form.du.getPCoin().getTalentCount());
 		level.setLevel(lv);
 
 		du = form.du;

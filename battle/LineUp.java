@@ -386,9 +386,9 @@ public class LineUp extends Data {
 		PCoin pc = null;
 
 		for(Form form : u.forms) {
-			if(form.du.getPCoin() != null && form.du.getPCoin().max.length > maxTalent) {
+			if(form.du.getPCoin() != null && form.du.getPCoin().getTalentCount() > maxTalent) {
 				pc = form.du.getPCoin();
-				maxTalent = pc.max.length;
+				maxTalent = pc.getTalentCount();
 			}
 		}
 
@@ -396,15 +396,12 @@ public class LineUp extends Data {
 		lv.setPlusLevel(Math.max(0, Math.min(u.maxp, lv.getPlusLv())));
 
 		if(pc != null) {
-			int[] max = pc.max;
+			int[] max = pc.getMaxLvls();
 
 			if(lv.getTalents().length < max.length) {
 				int[] talents = new int[max.length];
-
-				for(int i = 0; i < lv.getTalents().length; i++) {
+				for(int i = 0; i < lv.getTalents().length; i++)
 					talents[i] = lv.getTalents()[i];
-				}
-
 				if (max.length - lv.getTalents().length >= 0)
 					System.arraycopy(max, lv.getTalents().length, talents, lv.getTalents().length, max.length - lv.getTalents().length);
 

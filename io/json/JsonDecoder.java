@@ -396,7 +396,7 @@ public class JsonDecoder {
 			if (curjfld == null || curjfld.block() || curjfld.io() == JsonField.IOType.W)
 				continue;
 			String tag = curjfld.tag();
-			if (tag.length() == 0)
+			if (tag.isEmpty())
 				tag = f.getName();
 			if (!jobj.has(tag))
 				continue;

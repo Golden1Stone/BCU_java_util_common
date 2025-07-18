@@ -77,7 +77,7 @@ public abstract class AtkModelEntity extends AtkModelAb {
 			atks[i] = (int) (Math.round(raw[i][0] * d1) * d0);
 			double com = ent.basis.isBanned(Data.C_ATK) ? 1.0 : (1 + ent.basis.b.getInc(Data.C_ATK) * 0.01);
 
-			if (pc != null && lv != null && lv.getTalents().length == pc.max.length)
+			if (pc != null && lv != null && lv.getTalents().length == pc.getTalentCount())
 				atks[i] = (int) Math.round((int) (pc.getAtkMultiplication(lv.getTalents()) * atks[i]) * com);
 			else
 				atks[i] = (int) Math.round(atks[i] * com);

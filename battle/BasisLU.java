@@ -132,8 +132,8 @@ public class BasisLU extends Basis implements Copable<BasisLU>, BattleStatic {
 					int[] talents = lv.getTalents();
 					PCoin pc = fs[i].du.getPCoin();
 
-					for(int j = 0; j < Math.min(pc.info.size(), talents.length); j++) {
-						if(pc.info.get(j)[13] == 1 && lv.getLv() + lv.getPlusLv() < 60) {
+					for(int j = 0; j < Math.min(pc.getTalentCount(), talents.length); j++) {
+						if(pc.data.get(j)[13] == 1 && lv.getLv() + lv.getPlusLv() < 60) {
 							talents[j] = 0;
 						}
 					}

@@ -28,8 +28,8 @@ public class Level implements BattleStatic, LevelInterface {
 		for(Form f : u.forms) {
 			PCoin pc = f.du.getPCoin();
 
-			if(pc != null && talentNumber < pc.max.length) {
-				talentNumber = pc.max.length;
+			if(pc != null && talentNumber < pc.getTalentCount()) {
+				talentNumber = pc.getTalentCount();
 				coin = pc;
 			}
 		}
@@ -45,7 +45,7 @@ public class Level implements BattleStatic, LevelInterface {
 		}
 
 		if(coin != null) {
-			int[] talents = new int[coin.max.length];
+			int[] talents = new int[coin.getTalentCount()];
 			int min = Math.min(arr.length - 2, talents.length);
 			if (min >= 0)
                 System.arraycopy(arr, 2, talents, 0, min);
