@@ -191,7 +191,7 @@ public class EUnit extends Entity {
 			return;
 		}
 
-		if (atk.trait.contains(BCTraits.get(TRAIT_BEAST))) {
+		if (atk.trait.contains(UserProfile.getBCData().traits.get(TRAIT_BEAST))) {
 			Proc.BSTHUNT beastDodge = getProc().BSTHUNT;
 
 			if (beastDodge.prob > 0 && (atk.dire != dire)) {
@@ -233,7 +233,7 @@ public class EUnit extends Entity {
 			}
 		}
 
-		if (atk.trait.contains(BCTraits.get(TRAIT_SAGE)) && canBeApplied && (getAbi() & AB_SKILL) != 0) {
+		if (atk.trait.contains(UserProfile.getBCData().traits.get(TRAIT_SAGE)) && canBeApplied && (getAbi() & AB_SKILL) != 0) {
 			ans *= (1f - SUPER_SAGE_HUNTER_RESIST);
 		}
 
@@ -255,9 +255,9 @@ public class EUnit extends Entity {
 			sharedTraits.retainAll(traits);
 			boolean isAntiTraited = targetTraited(atk.trait);
 			for (Trait t : traits) {
-				if (t.BCTrait || sharedTraits.contains(t))
+				if (t.id.pack.equals("000000") || sharedTraits.contains(t))
 					continue;
-				if ((t.targetType && isAntiTraited) || t.others.contains(((MaskUnit)data).getPack()))
+				if ((t.targetType && isAntiTraited) || t.targetForms.contains(((MaskUnit)data).getPack()))
 					sharedTraits.add(t);
 			}
 

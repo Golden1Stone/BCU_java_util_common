@@ -86,8 +86,10 @@ public class PCoin extends Data {
 //	}
 
 	private PCoin(int[] strs, MaskUnit du) {
-		for (int i = 0; i < TALENT_COUNT_MAX; i++) { //
-			if (2 + i * 14 >= strs.length)
+		trait = Trait.talentBitmaskToTrait(strs[1]);
+
+		for (int i = 0; i < TALENT_COUNT_MAX; i++) {
+			if (2 + i * 14 >= strs.length) {
 				break;
 
 			if(strs[2 + i * 14] != 0) {
