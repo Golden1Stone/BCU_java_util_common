@@ -20,7 +20,7 @@ public class DataUnit extends DefaultData implements MaskUnit, Cloneable {
 
 	public PCoin pcoin = null;
 
-	public DataUnit(Form f, Unit u, String[] data) {
+	public DataUnit(Form f, String[] data) {
 		form = f;
 		int[] ints = new int[data.length];
 		for (int i = 0; i < data.length; i++)
@@ -271,7 +271,7 @@ public class DataUnit extends DefaultData implements MaskUnit, Cloneable {
 		ArrayList<Trait> result = new ArrayList<>(super.getTraits());
 		for (PackData.UserPack userPack : UserProfile.getUserPacks())
 			for (Trait trait : userPack.traits)
-				if (trait.targetForms.contains(form))
+				if (trait.targetForms.contains(form) || (trait.targetType && Trait.isTargetTraited(traits)))
 					result.add(trait);
 		return result;
 	}
