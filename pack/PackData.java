@@ -216,6 +216,20 @@ public abstract class PackData implements IndexContainer {
             String dem = "demonsoul"; // TODO identify if anim is enemy or not in demon soul name in effect page
             demonSouls.add(new DemonSoul(0, new AnimUD(pre + dem + mid, "demonsoul_" + Data.duo(0), null, null), true));
             demonSouls.add(new DemonSoul(0, new AnimUD(pre + dem + mid, "demonsoul_" + Data.duo(0), null, null), false));
+
+            pre = "./custom/anim/soul/";
+
+            soulFolder = VFile.get(pre + dem + "/");
+
+            if(soulFolder == null)
+                return;
+
+            soulNumber = soulFolder.list().size();
+
+            for (int i = 1; i - 1 < soulNumber * 0.25; i++) {
+                demonSouls.add(new DemonSoul(0, new AnimUD(pre + dem + "/", "demonsoul_" + Data.duo(i), null, null), true));
+                demonSouls.add(new DemonSoul(0, new AnimUD(pre + dem + "/", "demonsoul_" + Data.duo(i), null, null), false));
+            }
         }
 
         private void loadUnits(Consumer<Double> bar) {
